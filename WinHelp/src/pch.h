@@ -7,7 +7,18 @@
 #ifndef PCH_H
 #define PCH_H
 
-// add headers that you want to pre-compile here
 #include "framework.h"
+#include <windows.h>
+#include <memory>
+#include <type_traits>
+#include <tchar.h>
+#include <optional>
+#include <string>
+
+#ifndef WHNOTHROW
+#include <exception>
+#include <system_error>
+#endif // WHNOTHROW
+
 
 #endif //PCH_H
