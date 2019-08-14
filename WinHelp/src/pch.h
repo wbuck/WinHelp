@@ -14,11 +14,8 @@
 #include <tchar.h>
 #include <optional>
 #include <string>
-
-#ifndef WHNOTHROW
-#include <exception>
 #include <system_error>
-#endif // WHNOTHROW
-
+#include <vector>
+#include <array>
 
 #endif //PCH_H

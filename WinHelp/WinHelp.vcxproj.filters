@@ -21,13 +21,16 @@
     <ClInclude Include="src\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\handle_ptr.hpp">
+    <ClInclude Include="include\encoding_conv.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\error_helper.hpp">
+    <ClInclude Include="include\handle_ptr.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\fs_helper.hpp">
+    <ClInclude Include="include\fs_helper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\expected.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -35,5 +38,14 @@
     <ClCompile Include="src\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\fs_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\encoding_conv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>
