@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinHelp", "WinHelp\WinHelp.vcxproj", "{E13511B0-13C5-4D3C-88F1-C575CB25BE3D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinHelpTests", "WinHelpTests\WinHelpTests.vcxproj", "{EF87808C-9924-43B3-AFE0-09A9B2B7EF78}"
+	ProjectSection(ProjectDependencies) = postProject
+		{E13511B0-13C5-4D3C-88F1-C575CB25BE3D} = {E13511B0-13C5-4D3C-88F1-C575CB25BE3D}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

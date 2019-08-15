@@ -77,8 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)bin\obj\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,8 +87,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)bin\obj\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)bin\$(ProjectName)\obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,7 +117,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\wil\include;$(ProjectDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include; </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -157,7 +157,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\wil\include;$(ProjectDir)include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include; </AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,8 +167,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\com.h" />
+    <ClInclude Include="include\common.h" />
+    <ClInclude Include="include\cppwinrt.h" />
+    <ClInclude Include="include\filesystem.h" />
+    <ClInclude Include="include\registry.h" />
+    <ClInclude Include="include\resource.h" />
+    <ClInclude Include="include\result.h" />
+    <ClInclude Include="include\result_macros.h" />
+    <ClInclude Include="include\result_originate.h" />
+    <ClInclude Include="include\safecast.h" />
+    <ClInclude Include="include\stl.h" />
+    <ClInclude Include="include\token_helpers.h" />
+    <ClInclude Include="include\win32_helpers.h" />
+    <ClInclude Include="include\winrt.h" />
+    <ClInclude Include="include\wistd_config.h" />
+    <ClInclude Include="include\wistd_functional.h" />
+    <ClInclude Include="include\wistd_memory.h" />
+    <ClInclude Include="include\wistd_type_traits.h" />
+    <ClInclude Include="include\wrl.h" />
     <ClInclude Include="include\encoding_conv.hpp" />
     <ClInclude Include="include\expected.hpp" />
+    <ClInclude Include="include\flags.hpp" />
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="include\fs_helper.hpp" />
     <ClInclude Include="include\handle_ptr.hpp" />

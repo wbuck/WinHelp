@@ -7,7 +7,7 @@
 #include <Shellapi.h>
 #include <Shobjidl.h>
 #include <shlobj.h>
-#include <wil/resource.h>
+#include <resource.h>
 
 namespace wh::fs
 {
@@ -190,4 +190,29 @@ namespace wh::fs
 		else
 			return ( attributes & FILE_ATTRIBUTE_DIRECTORY );
 	}
+
+	expected<wil::unique_hfile, std::error_code> create_file( std::wstring_view filename, 
+															  access_flag access, 
+															  share_flag mode, 
+															  creation_option options, 
+															  attr_flag flags ) noexcept
+	{
+		wil::unique_hfile phandle{ 
+			CreateFileW( filename.data( ),
+						 static_cast<DWORD>( access ),
+						 static_cast<DWORD>( mode ),
+						 nullptr,
+						 static_cast<DWORD>( options ),
+						 static_cast<DWORD>( flags ),
+						 nullptr ) };
+		if( !phandle )
+		{
+			return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
+				std::system_category( ) };
+		}
+		
+		return phandle;
+	}
+
+
 }

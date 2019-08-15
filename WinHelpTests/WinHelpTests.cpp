@@ -1,6 +1,7 @@
 ﻿#include "fs_helper.hpp"
 #include "encoding_conv.hpp"
 #include "expected.hpp"
+#include "flags.hpp"
 #include <variant>
 #include <iostream>
 #include <fstream>
@@ -71,6 +72,26 @@ static void test_dir_exists( std::wstring_view dir )
 		std::cout << "Directory exists test success\n";	
 }
 
+static void test_create_file( std::wstring_view filepath )
+{
+	std::cout << "\nCreate file test\n";
+	if( auto expected{ wh::fs::create_file( 
+		filepath, 
+		wh::access_flag::read | wh::access_flag::write, 
+		wh::share_flag::share_none,
+		wh::creation_option::create_always, 
+		wh::attr_flag::flag_delete_on_close | wh::attr_flag::sec_impersonation ) }; expected )
+	{
+		auto handle{ std::move( expected.value( ) ) };
+		std::cout << "Create file test success\n";
+	}
+	else
+	{
+		std::error_code ec{ expected.error( ) };
+		std::cout << "Create file test failed: " << ec.message( ) << '\n';
+	}
+}
+
 static void test_remove_dir( std::wstring_view dir )
 {
 	std::cout << "\nRemove directory test\n";
@@ -125,9 +146,12 @@ int wmain( int argc, wchar_t* argv[ ] )
 		std::wstring path{ argv[ 1 ] };
 		test_create_dir( path );
 		test_dir_exists( path );
+		std::wstring file{ path };
+		file.append( LR"(\TestFile.txt)" );
+		test_create_file( file );
 		test_remove_dir( path );
 	}
-	test_encoding( );
+	test_encoding( ); 
 	std::cin.get( );
 	return 0;
 }
