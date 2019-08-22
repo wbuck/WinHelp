@@ -63,4 +63,23 @@ namespace wh
 	};
 
 	DEFINE_ENUM_FLAG_OPERATORS( attr_flag );
+
+	enum class protection_flag : DWORD
+	{
+		execute_read = PAGE_EXECUTE_READ,
+		execute_read_write = PAGE_EXECUTE_READWRITE,
+		execute_write_copy = PAGE_EXECUTE_WRITECOPY,
+		readonly = PAGE_READONLY,
+		read_write = PAGE_READWRITE,
+		write_copy = PAGE_WRITECOPY,
+		sec_commit = SEC_COMMIT,
+		sec_image = SEC_IMAGE,
+		sec_image_no_execute = SEC_IMAGE_NO_EXECUTE,
+		sec_large_pages = SEC_LARGE_PAGES,
+		sec_no_cache = SEC_NOCACHE,
+		sec_reserve = SEC_RESERVE,
+		sec_write_combine = SEC_WRITECOMBINE
+	};
+
+	DEFINE_ENUM_FLAG_OPERATORS( protection_flag );
 }

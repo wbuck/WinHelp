@@ -26,6 +26,9 @@ namespace wh
 		constexpr expected( E&& e ) noexcept
 			: _value{ std::forward<E>( e ) } { }
 
+		constexpr expected( const E& e ) noexcept( std::is_nothrow_copy_constructible_v )
+			: _value{ e } { }
+
 		constexpr operator bool( ) const noexcept
 		{
 			return std::holds_alternative<T>( _value );
@@ -51,9 +54,11 @@ namespace wh
 		expected( ) noexcept
 			: _value{ void_type } { }
 
-		expected( E&& e ) noexcept
+		constexpr expected( E&& e ) noexcept
 			: _value{ std::forward<E>( e ) } { }
 
+		constexpr expected( const E& e ) noexcept( std::is_nothrow_copy_constructible_v )
+			: _value{ e } { }
 
 		constexpr operator bool( ) const noexcept
 		{
@@ -68,4 +73,7 @@ namespace wh
 	private:
 		std::variant<void_t, E> _value;
 	};
+
+	template<typename T>
+	using expected_ec_t = expected<T, std::error_code>;
 }

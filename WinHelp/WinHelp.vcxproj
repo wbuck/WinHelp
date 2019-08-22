@@ -115,9 +115,10 @@
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalIncludeDirectories>$(ProjectDir)include; </AdditionalIncludeDirectories>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -155,9 +156,11 @@
       <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalIncludeDirectories>$(ProjectDir)include; </AdditionalIncludeDirectories>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -167,42 +170,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\com.h" />
-    <ClInclude Include="include\common.h" />
-    <ClInclude Include="include\cppwinrt.h" />
-    <ClInclude Include="include\filesystem.h" />
-    <ClInclude Include="include\registry.h" />
-    <ClInclude Include="include\resource.h" />
-    <ClInclude Include="include\result.h" />
-    <ClInclude Include="include\result_macros.h" />
-    <ClInclude Include="include\result_originate.h" />
-    <ClInclude Include="include\safecast.h" />
-    <ClInclude Include="include\stl.h" />
-    <ClInclude Include="include\token_helpers.h" />
-    <ClInclude Include="include\win32_helpers.h" />
-    <ClInclude Include="include\winrt.h" />
-    <ClInclude Include="include\wistd_config.h" />
-    <ClInclude Include="include\wistd_functional.h" />
-    <ClInclude Include="include\wistd_memory.h" />
-    <ClInclude Include="include\wistd_type_traits.h" />
-    <ClInclude Include="include\wrl.h" />
+    <ClInclude Include="include\custom_ptrs.hpp" />
+    <ClInclude Include="include\io_req.hpp" />
+    <ClInclude Include="include\scoped_exit.hpp" />
     <ClInclude Include="include\encoding_conv.hpp" />
     <ClInclude Include="include\expected.hpp" />
     <ClInclude Include="include\flags.hpp" />
+    <ClInclude Include="include\stopwatch.hpp" />
+    <ClInclude Include="include\win_handle.hpp" />
+    <ClInclude Include="include\win_utility.hpp" />
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="include\fs_helper.hpp" />
-    <ClInclude Include="include\handle_ptr.hpp" />
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\encoding_conv.cpp" />
     <ClCompile Include="src\fs_helper.cpp" />
+    <ClCompile Include="src\io_req.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\stopwatch.cpp" />
+    <ClCompile Include="src\win_utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

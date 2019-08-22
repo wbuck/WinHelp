@@ -1,31 +1,32 @@
 #include "pch.h"
 #include "fs_helper.hpp"
-#include "handle_ptr.hpp"
+#include "custom_ptrs.hpp"
 #include "encoding_conv.hpp"
+#include "scoped_exit.hpp"
+#include "win_utility.hpp"
 #include <vector>
 #include <system_error>
 #include <Shellapi.h>
 #include <Shobjidl.h>
 #include <shlobj.h>
-#include <resource.h>
 
 namespace wh::fs
 {
-	expected<std::wstring, std::error_code> get_known_path( const KNOWNFOLDERID& id ) noexcept
+	expected_ec_t<std::wstring> get_known_path( const KNOWNFOLDERID& id ) noexcept
 	{
 		PWSTR buffer{ nullptr };
 		HRESULT hresult{ SHGetKnownFolderPath( id, KF_FLAG_DEFAULT, nullptr, &buffer ) };
 
 		if( SUCCEEDED( hresult ) )
 		{
-			unique_handle_ptr<PWSTR, &CoTaskMemFree> pbuffer{ buffer };
+			unique_any_ptr<PWSTR, &CoTaskMemFree> pbuffer{ buffer };
 			return std::wstring{ pbuffer.get( ) };
 		}
 		return std::error_code{ static_cast<int32_t>( hresult ), 
 			std::system_category( ) };
 	}
 
-	expected<std::wstring, std::error_code> get_temp_path( ) noexcept
+	expected_ec_t<std::wstring> get_temp_path( ) noexcept
 	{
 		static constexpr DWORD initial_size{ MAX_PATH + 1 };
 		DWORD copied{ initial_size };
@@ -77,7 +78,7 @@ namespace wh::fs
 		return full_path;
 	}
 
-	expected<void, std::error_code> create_dir( std::wstring_view dir ) noexcept
+	expected_ec_t<void> create_dir( std::wstring_view dir ) noexcept
 	{
 		if( CreateDirectoryW( dir.data( ), nullptr ) )
 			return { };
@@ -86,7 +87,7 @@ namespace wh::fs
 			std::system_category( ) };
 	}
 
-	expected<std::wstring, std::error_code> get_current_dir( ) noexcept
+	expected_ec_t<std::wstring> get_current_dir( ) noexcept
 	{
 		// Determine the required size of the buffer.
 		DWORD size{ GetCurrentDirectoryW( 0, nullptr ) };
@@ -104,7 +105,7 @@ namespace wh::fs
 		}		
 	}
 
-	expected<void, std::error_code> remove_dir( std::wstring_view dir ) noexcept
+	expected_ec_t<void> remove_dir( std::wstring_view dir ) noexcept
 	{
 		// Lambda used as a deleter for the unique ptr.
 		static constexpr auto release =
@@ -120,7 +121,7 @@ namespace wh::fs
 			return std::error_code{ hresult, std::system_category( ) };
 
 		// Unitializes the COM object when the scope exits.
-		const auto cleanup = wil::scope_exit( [ ] { CoUninitialize( ); } );
+		const auto cleanup = on_scoped_exit( [ ] { CoUninitialize( ); } );
 
 		// Lambda for creating and initializing an
 		// IFileOperation object.
@@ -133,7 +134,7 @@ namespace wh::fs
 			HRESULT hresult{ CoCreateInstance( __uuidof( FileOperation ),
 				nullptr, CLSCTX_ALL, IID_PPV_ARGS( &file_op ) ) };
 
-			file_op_ptr pfile_op{ file_op };
+			file_op_ptr pfile_op{ file_op, release };
 			if( SUCCEEDED( hresult ) )
 			{
 				// Set the operation flags. Turn off all UI
@@ -150,7 +151,7 @@ namespace wh::fs
 
 		IFileOperation* file_op{ nullptr };
 		hresult = create_file_operation( IID_PPV_ARGS( &file_op ) );
-		file_op_ptr pfile_op{ file_op };
+		file_op_ptr pfile_op{ file_op, release };
 
 		if( FAILED( hresult ) )
 			return std::error_code{ hresult, std::system_category( ) };
@@ -161,7 +162,7 @@ namespace wh::fs
 		hresult = SHCreateItemFromParsingName(
 			dir.data( ), nullptr, IID_PPV_ARGS( &item ) );
 
-		item_ptr pitem{ item };
+		item_ptr pitem{ item, release };
 
 		if( FAILED( hresult ) )
 			return std::error_code{ hresult, std::system_category( ) };
@@ -191,13 +192,13 @@ namespace wh::fs
 			return ( attributes & FILE_ATTRIBUTE_DIRECTORY );
 	}
 
-	expected<wil::unique_hfile, std::error_code> create_file( std::wstring_view filename, 
-															  access_flag access, 
-															  share_flag mode, 
-															  creation_option options, 
-															  attr_flag flags ) noexcept
+	expected_ec_t<unique_file_ptr> create_file( std::wstring_view filename,
+											   access_flag access, 
+											   share_flag mode, 
+											   creation_option options, 
+											   attr_flag flags ) noexcept
 	{
-		wil::unique_hfile phandle{ 
+		unique_file_ptr phandle{ 
 			CreateFileW( filename.data( ),
 						 static_cast<DWORD>( access ),
 						 static_cast<DWORD>( mode ),
@@ -209,9 +210,59 @@ namespace wh::fs
 		{
 			return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
 				std::system_category( ) };
-		}
-		
+		}		
 		return phandle;
+	}
+
+	expected_ec_t<unique_file_ptr> create_mapping( HANDLE file,
+												   protection_flag protect, 
+												   std::size_t size, 
+												   const wchar_t* name ) noexcept
+	{
+		auto const [ high, low ] = util::split_size( size );
+
+		unique_file_ptr mmf{ CreateFileMappingW( file,
+			nullptr, static_cast<DWORD>( protect ),
+			high, low, name ) };
+
+		if( !mmf )
+		{
+			return std::error_code{ static_cast<int32_t>(
+				GetLastError( ) ), std::system_category( ) };
+		}
+		return mmf;
+	}
+
+	struct system_info : public SYSTEM_INFO
+	{ system_info( ) noexcept { GetSystemInfo( this ); } };
+
+	expected_ec_t<unique_view_ptr> create_view( HANDLE mmf, 
+												std::size_t offset, 
+												std::size_t size ) noexcept
+	{
+		static const system_info info{ };
+		static const std::size_t granularity{ info.dwAllocationGranularity };
+
+		// Round the offset down to the nearest
+		// multiple of the allocation granularity.
+		const std::size_t corrected_offset{ util::round_down( offset, granularity ) };
+		std::size_t correction{ offset - corrected_offset };
+
+		// Increase the requested length to ensure
+		// we pass a view which contains the requested
+		// addresses.
+		size += correction;
+
+		auto const [ high, low ] = util::split_size( corrected_offset );
+
+		LPVOID view{ MapViewOfFile( mmf, FILE_MAP_ALL_ACCESS, high, low, size ) };
+		if( !view )
+		{
+			return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
+				std::system_category( ) };
+		}
+		// Move the pointer to the offset position specied.
+		return wh::unique_view_ptr{ static_cast<char*>( view ) + correction };
 	}
 
 
