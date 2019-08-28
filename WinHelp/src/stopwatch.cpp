@@ -31,21 +31,6 @@ namespace wh::diag
 		_running = false;
 	}
 
-	double stopwatch::elapsed_microseconds( ) const noexcept
-	{
-		return static_cast<double>( ( _elapsed_ticks * 1000000.0 ) / _counter_frequency );
-	}
-
-	double stopwatch::elapsed_milliseconds( ) const noexcept
-	{
-		return static_cast<double>( ( _elapsed_ticks * 1000.0 ) / _counter_frequency );
-	}
-
-	double stopwatch::elapsed_seconds( ) const noexcept
-	{
-		return elapsed_milliseconds( ) / 1000;
-	}
-
 	uint64_t stopwatch::elapsed_ticks( ) const noexcept
 	{
 		return _elapsed_ticks;

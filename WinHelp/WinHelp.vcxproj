@@ -178,13 +178,17 @@
     <ClInclude Include="include\flags.hpp" />
     <ClInclude Include="include\stopwatch.hpp" />
     <ClInclude Include="include\win_handle.hpp" />
+    <ClInclude Include="include\win_help.hpp" />
     <ClInclude Include="include\win_utility.hpp" />
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="include\fs_helper.hpp" />
     <ClInclude Include="src\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\custom_ptrs.cpp" />
     <ClCompile Include="src\encoding_conv.cpp" />
+    <ClCompile Include="src\expected.cpp" />
+    <ClCompile Include="src\flags.cpp" />
     <ClCompile Include="src\fs_helper.cpp" />
     <ClCompile Include="src\io_req.cpp" />
     <ClCompile Include="src\pch.cpp">
@@ -194,6 +198,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\stopwatch.cpp" />
+    <ClCompile Include="src\win_handle.cpp" />
+    <ClCompile Include="src\win_help.cpp" />
     <ClCompile Include="src\win_utility.cpp" />
   </ItemGroup>
   <ItemGroup>

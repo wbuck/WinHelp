@@ -19,6 +19,7 @@ namespace wh
 
 	using unique_view_ptr = unique_any_ptr<LPVOID, &UnmapViewOfFile>;
 	using unique_event_ptr = unique_any_ptr<HANDLE, &CloseHandle>;
+	using unique_aligned_ptr = unique_any_ptr<LPVOID, &_aligned_free>;
 }
 
 

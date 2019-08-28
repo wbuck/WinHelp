@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "encoding_conv.hpp"
+#include "win_utility.hpp"
 
 namespace wh::conv
 {
-	expected<std::string, std::error_code> to_utf8( std::wstring_view utf16str ) noexcept
+	using namespace util;
+	expected_ec_t<std::string> to_utf8( std::wstring_view utf16str ) noexcept
 	{
 		int32_t utf16len{ static_cast<int32_t>( utf16str.size( ) ) };
 
@@ -16,10 +18,7 @@ namespace wh::conv
 			nullptr, 0, nullptr, nullptr ) };
 
 		if( utf8len == 0 )
-		{
-			return std::error_code{ 
-				static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-		}
+			return get_errorcode( GetLastError( ) );		
 
 		std::string utf8str( utf8len, '\0' );
 
@@ -32,15 +31,12 @@ namespace wh::conv
 			nullptr, nullptr ) };
 
 		if( bytes_written == 0 )
-		{
-			return std::error_code{
-				static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-		}
+			return get_errorcode( GetLastError( ) );
 
 		return utf8str;
 	}
 
-	expected<std::wstring, std::error_code> to_utf16( std::string_view utf8str ) noexcept
+	expected_ec_t<std::wstring> to_utf16( std::string_view utf8str ) noexcept
 	{
 		int32_t utf8len{ static_cast<int32_t>( utf8str.size( ) ) };
 
@@ -53,10 +49,7 @@ namespace wh::conv
 			nullptr, 0 ) };
 
 		if( utf16len == 0 )
-		{
-			return std::error_code{
-				static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-		}
+			return get_errorcode( GetLastError( ) );
 
 		std::wstring utf16str( utf16len, L'\0' );
 
@@ -68,10 +61,8 @@ namespace wh::conv
 			utf16len ) };
 
 		if( bytes_written == 0 )
-		{
-			return std::error_code{
-				static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-		}
+			return get_errorcode( GetLastError( ) );
+
 		return utf16str;
 	}
 }

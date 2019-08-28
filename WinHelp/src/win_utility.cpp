@@ -12,10 +12,8 @@ namespace wh::util
 			CreateEventW( nullptr, is_mre, initial_state, name ) } };
 
 		if( !signal )
-		{
-			return std::error_code{ static_cast<int32_t>(
-				GetLastError( ) ), std::system_category( ) };
-		}
+			return get_errorcode( GetLastError( ) );
+		
 		return signal;
 	}
 
@@ -23,23 +21,17 @@ namespace wh::util
 	{
 		HANDLE htoken{ nullptr };
 
-		static const auto error = [ ]( DWORD error ) 
-		{
-			return std::error_code{ static_cast<int32_t>(
-				error ), std::system_category( ) };
-		};
-
 		if( !OpenProcessToken( GetCurrentProcess( ),
 				TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &htoken ) )
 		{
-			return error( GetLastError( ) );
+			return get_errorcode( GetLastError( ) );
 		}
 
 		unique_any_ptr<HANDLE, &CloseHandle> phtoken{ htoken };
 
 		LUID luid;
 		if( !LookupPrivilegeValueW( nullptr, priv.data( ), &luid ) )
-			return error( GetLastError( ) );
+			return get_errorcode( GetLastError( ) );
 		
 		TOKEN_PRIVILEGES tp{ };
 		tp.PrivilegeCount = 1;
@@ -54,7 +46,12 @@ namespace wh::util
 									nullptr,
 									nullptr ) )
 		{
-			return error( GetLastError( ) );
+			return get_errorcode( GetLastError( ) );
+		}
+		else
+		{
+			if( auto code{ GetLastError( ) }; code != ERROR_SUCCESS )
+				return get_errorcode( code );
 		}
 
 		return { };

@@ -68,8 +68,9 @@ namespace wh
 	inline write_io_req<Container>::write_io_req( std::size_t offset ) noexcept
 		: OVERLAPPED{ }
 	{
-		OffsetHigh = static_cast<DWORD>( ( offset >> 32 ) & 0xFFFFFFFFUL );
-		Offset = static_cast<DWORD>( offset & 0xFFFFFFFFUL );
+		auto [ high, low ] { util::split_size( offset ) };
+		OffsetHigh = high;
+		Offset = low;
 		hEvent = nullptr;
 	} 
 
@@ -105,13 +106,11 @@ namespace wh
 		if( auto result{ create_event( ) }; !result )
 			return result;
 
-		if( !WriteFile( file, _buffer.data( ), static_cast<DWORD>( _buffer.size( ) ), nullptr, this ) )
+		if( !WriteFile( file, _buffer.data( ), 
+				static_cast<DWORD>( _buffer.size( ) ), nullptr, this ) )
 		{
 			if( auto code{ GetLastError( ) }; code != ERROR_IO_PENDING )
-			{
-				return std::error_code{ 
-					static_cast<int32_t>( code ), std::system_category( ) };
-			}
+				return util::get_errorcode( code );			
 		}
 		return { };
 	}
@@ -142,7 +141,8 @@ namespace wh
 		{ return get_event( ); }
 
 		template<typename Ptr>
-		expected_ec_t<void> read_async( HANDLE file, const Ptr buf, std::size_t count ) noexcept;
+		expected_ec_t<void> read_async( HANDLE file, 
+			const Ptr buf, std::size_t count ) noexcept;
 
 		const HANDLE get_event( ) const noexcept;
 
@@ -155,8 +155,9 @@ namespace wh
 	inline read_io_req::read_io_req( std::size_t offset ) noexcept
 		: OVERLAPPED{ }
 	{
-		OffsetHigh = static_cast<DWORD>( ( offset >> 32 ) & 0xFFFFFFFFUL );
-		Offset = static_cast<DWORD>( offset & 0xFFFFFFFFUL );
+		auto [ high, low ] { util::split_size( offset ) };
+		OffsetHigh = high;
+		Offset = low;
 		hEvent = nullptr;
 	}
 
@@ -190,10 +191,7 @@ namespace wh
 					   static_cast<DWORD>( count ), nullptr, this ) )
 		{
 			if( auto code{ GetLastError( ) }; code != ERROR_IO_PENDING )
-			{
-				return std::error_code{ static_cast<int32_t>(
-					GetLastError( ) ), std::system_category( ) };
-			}
+				return util::get_errorcode( code );			
 		}
 		return { };
 	}
@@ -216,11 +214,10 @@ namespace wh
 				count, events.data( ), true, static_cast<DWORD>( timeout.count( ) ) ) }; 
 				result == WAIT_FAILED )
 			{
-				return std::error_code{
-					static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
+				return util::get_errorcode( GetLastError( ) );
 			}
 			else if( result == WAIT_TIMEOUT )
-				return std::error_code{ WAIT_TIMEOUT, std::system_category( ) };			
+				return util::get_errorcode( WAIT_TIMEOUT );
 		}
 		return { };
 	}
@@ -243,10 +240,8 @@ namespace wh
 				it = cont.erase( it );
 			
 			else if( DWORD code{ GetLastError( ) }; code != ERROR_IO_INCOMPLETE )
-			{
-				return std::error_code{ 
-					static_cast<int32_t>( code ), std::system_category( ) };
-			}
+				return util::get_errorcode( code );
+			
 			else ++it;	
 		}
 		return { };

@@ -10,6 +10,9 @@ namespace wh
 		read = GENERIC_READ,
 		write = GENERIC_WRITE,
 		execute = GENERIC_EXECUTE,
+		standard_rights_read = STANDARD_RIGHTS_READ,
+		standard_rights_write = STANDARD_RIGHTS_WRITE,
+		standard_rights_exe = STANDARD_RIGHTS_EXECUTE,
 		all = GENERIC_ALL
 	};
 

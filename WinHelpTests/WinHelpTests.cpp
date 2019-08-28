@@ -1,11 +1,13 @@
-﻿#include "fs_helper.hpp"
-#include "encoding_conv.hpp"
-#include "expected.hpp"
-#include "flags.hpp"
-#include "io_req.hpp"
-#include "win_handle.hpp"
-#include "custom_ptrs.hpp"
-#include "stopwatch.hpp"
+﻿//#include "fs_helper.hpp"
+//#include "encoding_conv.hpp"
+//#include "expected.hpp"
+//#include "flags.hpp"
+//#include "io_req.hpp"
+//#include "win_handle.hpp"
+//#include "custom_ptrs.hpp"
+//#include "stopwatch.hpp"
+
+#include "win_help.hpp"
 #include <variant>
 #include <iostream>
 #include <fstream>
@@ -14,23 +16,27 @@
 #include <vector>
 #include <fstream>
 #include <tuple>
+#include <type_traits>
 
 #ifndef DEBUG_BREAK
 #	define DEBUG_BREAK __debugbreak( )
 #endif
 
 
-
-static constexpr DWORD _data_size{ 1728 * 400 };
+//57028608
+//28514304
+//‭114057216‬
+static constexpr DWORD _data_size{ 114057216U };
 std::vector<char> _buffer_a( _data_size, 'A' );
 std::vector<char> _buffer_b( _data_size, 'B' );
 std::vector<char> _buffer_c( _data_size, 'C' );
 std::vector<char> _buffer_d( _data_size, 'D' );
+std::vector<char> _buffer_e( _data_size, 'E' );
 
 static void test_known_path( )
 {
 	std::cout << "\nKnown path test\n";
-	if( auto expected{ wh::fs::get_known_path( FOLDERID_CommonPrograms ) }; expected )
+	if( auto expected{ winh::get_known_path( FOLDERID_CommonPrograms ) }; expected )
 	{
 		std::wstring path{ expected.value( ) };
 		std::wcout << L"Known path test success. [" << path << L"]\n";
@@ -45,7 +51,7 @@ static void test_known_path( )
 static void test_temp_path( )
 {
 	std::cout << "\nTemp path test\n";
-	if( auto expected{ wh::fs::get_temp_path( ) }; expected )
+	if( auto expected{ winh::get_temp_path( ) }; expected )
 	{
 		std::wstring path{ expected.value( ) };
 		std::wcout << L"Temp path test success. [" << path << L"]\n";
@@ -60,7 +66,7 @@ static void test_temp_path( )
 static void test_current_path( )
 {
 	std::cout << "\nCurrent path test\n";
-	if( auto expected{ wh::fs::get_current_dir( ) }; expected )
+	if( auto expected{ winh::get_current_dir( ) }; expected )
 	{
 		std::wstring path{ expected.value( ) };
 		std::wcout << L"Current path test success. [" << path << L"]\n";
@@ -75,7 +81,7 @@ static void test_current_path( )
 static void test_create_dir( std::wstring_view dir )
 {
 	std::cout << "\nCreate directory test\n";
-	if( auto expected{ wh::fs::create_dir( dir ) }; expected )
+	if( auto expected{ winh::create_dir( dir ) }; expected )
 		std::cout << "Create directory test success\n";	
 	else
 	{
@@ -87,21 +93,20 @@ static void test_create_dir( std::wstring_view dir )
 static void test_dir_exists( std::wstring_view dir )
 {
 	std::cout << "\nDirectory exists test\n";
-	if( wh::fs::dir_exists( dir ) )
+	if( winh::dir_exists( dir ) )
 		std::cout << "Directory exists test success\n";	
 }
 
 static void test_create_file( std::wstring_view filepath )
 {
 	std::cout << "\nCreate file test\n";
-	if( auto expected{ wh::fs::create_file( 
+	if( auto expected{ winh::create_file( 
 		filepath, 
-		wh::access_flag::read | wh::access_flag::write, 
-		wh::share_flag::share_none,
-		wh::creation_option::create_always, 
-		wh::attr_flag::flag_delete_on_close ) }; expected )
+		winh::access_flag::read | winh::access_flag::write, 
+		winh::share_flag::share_none,
+		winh::creation_option::create_always, 
+		winh::attr_flag::flag_delete_on_close ) }; expected )
 	{		
-		//wh::unique_file_ptr fhandle{ std::move( expected ).value( ) };
 		std::cout << "Create file test success\n";	
 	}
 	else
@@ -114,7 +119,7 @@ static void test_create_file( std::wstring_view filepath )
 static void test_remove_dir( std::wstring_view dir )
 {
 	std::cout << "\nRemove directory test\n";
-	if( auto expected{ wh::fs::remove_dir( dir ) }; expected )
+	if( auto expected{ winh::remove_dir( dir ) }; expected )
 		std::cout << "Remove directory test success\n";
 	else
 	{
@@ -129,13 +134,13 @@ static void test_encoding( )
 	std::string utf8str;
 
 	std::cout << "\nUTF16 to UTF8 test\n";
-	if( auto expected_utf8{ wh::conv::to_utf8( utf16str ) }; expected_utf8 )
+	if( auto expected_utf8{ winh::to_utf8( utf16str ) }; expected_utf8 )
 	{
 		utf8str = expected_utf8.value( );
 		std::cout << "UTF16 to UTF8 conversion success: [" << utf8str << "]\n";
 
 		std::cout << "\nUTF8 to UTF16 test\n";
-		if( auto expected_utf16{ wh::conv::to_utf16( utf8str ) };  expected_utf16 )
+		if( auto expected_utf16{ winh::to_utf16( utf8str ) };  expected_utf16 )
 		{
 			std::wstring utf16{ expected_utf16.value( ) };
 			std::wcout << L"UTF8 to UTF16 conversion success: [" << utf16str << L"]\n";
@@ -155,27 +160,64 @@ static void test_encoding( )
 
 static void test_pointer( )
 {
-	wh::unique_file_ptr null_handle{ nullptr };
+	winh::unique_file_ptr null_handle{ nullptr };
 	if( !null_handle ) std::cout << "Pointer [NULL] test success\n";
 	else std::cout << "Pointer test failed: Invalid handle returned true\n";
 
-	wh::unique_file_ptr invalid_handle{ INVALID_HANDLE_VALUE };
+	winh::unique_file_ptr invalid_handle{ INVALID_HANDLE_VALUE };
 	if( !invalid_handle ) std::cout << "Pointer [INVALID] test success\n";
 	else std::cout << "Pointer test failed: Invalid handle returned true\n";
 }
-
-template<typename T,
-	typename = std::enable_if_t<std::is_unsigned_v<T>>>
-	constexpr auto round_up( T num_to_round, T multiple )
+/*
+template<wchar_t Drive>
+struct symlink
 {
-	return ( ( num_to_round + multiple - 1 ) / multiple ) * multiple;
-}
+	static constexpr const wchar_t path[ ]
+		{ L'\\', L'\\', L'.', L'\\', Drive, L':', L'\0' };
 
-template<typename T,
-	typename = std::enable_if_t<std::is_unsigned_v<T>>>
-	constexpr auto round_down( T num_to_round, T multiple )
+	constexpr const wchar_t* get_link( ) 
+	{ return path; }
+
+	constexpr operator const wchar_t* ( ) { return get_link( ); };
+
+	constexpr std::size_t size( ) 
+	{ return ( sizeof( path ) / sizeof( wchar_t ) ) - 1; }
+};
+
+template<wchar_t Drive>
+winh::expected_ec_t<DWORD> get_sector_size( )
 {
-	return ( num_to_round / multiple ) * multiple;
+	STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR descriptor{ };
+	STORAGE_PROPERTY_QUERY query{ };
+	DWORD bytes{ 0 };
+
+	symlink<Drive> link{ };
+	auto fexp{ winh::create_file( link.get_link( ),
+		winh::access_flag::standard_rights_read,
+		winh::share_flag::share_read | winh::share_flag::share_write,
+		winh::creation_option::open_existing ) };
+
+	if( !fexp )
+		return std::move( fexp ).error( );
+
+	auto file{ std::move( fexp ).value( ) };
+
+	query.QueryType = PropertyStandardQuery;
+	query.PropertyId = StorageAccessAlignmentProperty;
+
+	if( !DeviceIoControl( file.get( ),
+						  IOCTL_STORAGE_QUERY_PROPERTY,
+						  &query,
+						  sizeof( STORAGE_PROPERTY_QUERY ),
+						  &descriptor,
+						  sizeof( STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR ),
+						  &bytes,
+						  nullptr ) )
+	{
+		return winh::get_errorcode( GetLastError( ) );
+	}
+
+	return descriptor.BytesPerPhysicalSector;
 }
 
 DWORD DetectSectorSize( WCHAR* devName, PSTORAGE_ACCESS_ALIGNMENT_DESCRIPTOR pAlignmentDescriptor )
@@ -223,19 +265,16 @@ DWORD DetectSectorSize( WCHAR* devName, PSTORAGE_ACCESS_ALIGNMENT_DESCRIPTOR pAl
 
 #define ROUND_UP_SIZE(Value,Pow2) ((SIZE_T) ((((ULONG)(Value)) + (Pow2) - 1) & (~(((LONG)(Pow2)) - 1))))
 #define ROUND_UP_PTR(Ptr,Pow2)  ((void *) ((((ULONG_PTR)(Ptr)) + (Pow2) - 1) & (~(((LONG_PTR)(Pow2)) - 1))))
-
-static void test_write_nb_overlapped( std::wstring_view filepath )
+*/
+static void test_write_normal( std::wstring_view filepath )
 {
-	using namespace wh;
-	using namespace wh::diag;
-	
-	auto fexpected{ wh::fs::create_file(
+	auto privexp{ winh::set_privilege( SE_MANAGE_VOLUME_NAME, true ) };
+	auto fexpected{ winh::create_file(
 		filepath,
-		access_flag::write,
-		share_flag::share_none,
-		creation_option::create_always,
-		attr_flag::flag_no_buffering ) };
-	
+		winh::access_flag::write,
+		winh::share_flag::share_none,
+		winh::creation_option::create_always ) };
+
 	if( !fexpected )
 	{
 		auto ec{ fexpected.error( ) };
@@ -245,69 +284,205 @@ static void test_write_nb_overlapped( std::wstring_view filepath )
 	auto fhandle{ std::move( fexpected ).value( ) };
 
 	LARGE_INTEGER file_size{ 0 };
-	file_size.QuadPart = round_up( _data_size, 512UL );
+	file_size.QuadPart = _data_size * 5;
 
-	//if( !SetFilePointerEx( fhandle.get( ), file_size, nullptr, FILE_BEGIN ) )
-	//{
-	//	std::error_code ex{ static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-	//	std::cout << "Failed: SetFilePointer - " << ex.message( ) << '\n';
-	//}
-	//SetEndOfFile( fhandle.get( ) );
-	
-	// Allocate aligned memory.
-	wh::unique_any_ptr<LPVOID, &_aligned_free> uptr{ _aligned_malloc( _data_size, 512 ) };
-	if( !uptr )
+	if( auto exp{ winh::resize_file( fhandle.get( ), file_size.QuadPart ) }; !exp )
+		std::cout << "Failed to resize file: " << exp.error( ).message( ) << '\n';
+	if( privexp )
 	{
-		std::cout << "Failed to allocate aligned memory\n";
-		return;
+		std::cout << "Setting valid data\n";
+		if( !SetFileValidData( fhandle.get( ), file_size.QuadPart ) )
+		{
+			std::error_code ex{ static_cast< int32_t >(
+				GetLastError( ) ), std::system_category( ) };
+		}
 	}
-	std::uintptr_t* ptr{ reinterpret_cast<std::uintptr_t*>( uptr.get( ) ) };
 
-	if( reinterpret_cast<std::uintptr_t>( uptr.get( ) ) % 512 == 0 )
-		std::cout << "Memory correctly aligned\n";
-	else 
-		std::cout << "Failed to align memory\n";
-
-	const uint64_t* out{ reinterpret_cast<uint64_t*>( _buffer_a.data( ) ) };
-	const std::size_t size{ _buffer_a.size( ) / sizeof( uint64_t ) };
-
-	std::copy( out, out + size, ptr );
-	//uint64_t count{ 0 };
-	//while( count < size )
-	//{
-	//	*ptr++ = *out++;
-	//	++count;
-	//}
-	DWORD written{ 0 };
-	stopwatch sw;
+	winh::stopwatch sw{ };
+	winh::stopwatch sw2{ };
 	sw.start( );
-	if( !WriteFile( fhandle.get( ), _buffer_a.data( ), file_size.QuadPart, &written, nullptr ) )
+	int32_t req_n{ 1 };
+	while( req_n < 6 )
 	{
-		std::error_code ex{ static_cast<int32_t>( GetLastError( ) ), std::system_category( ) };
-		std::cout << "Failed: WriteFile - " << ex.message( ) << '\n';
-		return;
+		std::vector<char>* buffer{ nullptr };
+		if( req_n == 1 )
+			buffer = &_buffer_a;
+		else if( req_n == 2 )
+			buffer = &_buffer_b;
+		else if( req_n == 3 )
+			buffer = &_buffer_c;
+		else if( req_n == 4 )
+			buffer = &_buffer_d;
+		else if( req_n == 5 )
+			buffer = &_buffer_e;
+
+		sw2.start( );
+		DWORD written{ 0 };
+		if( !WriteFile( fhandle.get( ), buffer->data( ), buffer->size(), &written, nullptr ) )
+		{
+			std::error_code ex{ static_cast< int32_t >( GetLastError( ) ), std::system_category( ) };
+			std::cout << "Failed: WriteFile - " << ex.message( ) << '\n';
+			return;
+		}
+		sw2.stop( );
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::microseconds>( ) << "us\n";
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+		sw2.reset( );
+		++req_n;
 	}
 	sw.stop( );
-	std::cout << "Complete. Elapsed " << sw.elapsed_microseconds( ) << "us\n";
-	std::cout << "Complete. Elapsed " << sw.elapsed_milliseconds( ) << "ms\n";
-	std::cout << "Bytes written " << written << '\n';
-	//file_size.QuadPart = _data_size;
-	//SetFilePointerEx( fhandle.get( ), file_size, nullptr, FILE_BEGIN );
-	//SetEndOfFile( fhandle.get( ) );
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+}
+
+static void test_write_nb_overlapped( std::wstring_view filepath )
+{
+	auto privexp{ winh::set_privilege( SE_MANAGE_VOLUME_NAME, true ) };
+	auto fexpected{ winh::create_file(
+		filepath,
+		winh::access_flag::write,
+		winh::share_flag::share_none,
+		winh::creation_option::create_always,
+		winh::attr_flag::flag_no_buffering | 
+		winh::attr_flag::flag_overlapped ) };
+	
+	if( !fexpected )
+	{
+		auto ec{ fexpected.error( ) };
+		std::cout << "Failed to create file: " << ec.message( ) << '\n';
+		return;
+	}
+	auto fhandle{ std::move( fexpected ).value( ) };
+
+	std::size_t file_size{ _data_size * 5 };
+
+	auto size{ winh::get_drive_sectorsize<L'C'>( ) };
+	if( !size )
+	{
+		std::cout << size.error( ).message( ) << '\n';
+		return;
+	}
+	DWORD sector_size{ size.value( ) };
+	std::cout << "Drive C Sector Size: " << sector_size << '\n';
+	file_size = winh::round_up( file_size, sector_size );
+
+	if( file_size % _data_size != 0 )
+	{
+		std::cout << "Invalid size\n";
+		return;
+	}
+
+	if( auto exp{ winh::resize_file( fhandle.get( ), file_size ) }; !exp )
+		std::cout << "Failed to resize file: " << exp.error( ).message( ) << '\n';
+
+	if( privexp )
+	{
+		std::cout << "Setting valid data\n";
+		if( !SetFileValidData( fhandle.get( ), file_size ) )
+		{
+			std::error_code ex{ static_cast<int32_t>(
+				GetLastError( ) ), std::system_category( ) };
+		}
+	}
+	else
+	{
+		std::cout << "Failed to set priv: " << privexp.error( ).message( ) << '\n';
+	}
+	
+	using unique_aligned_ptr = winh::unique_any_ptr<LPVOID, &_aligned_free>;
+	std::array<unique_aligned_ptr, 5> pointers;
+
+	std::vector<char> data( _data_size, 'A' );
+	static constexpr int32_t count{ 5 };
+	std::array<OVERLAPPED, count> overlapped{ };
+	std::array<HANDLE, count> events{ };
+
+	std::cout << "Creating events and allocating memory\n";
+	for( int32_t i{ 0 }; i < count; i++ )
+	{
+		events[ i ] = CreateEventW( nullptr, TRUE, FALSE, nullptr );
+		if( !events[ i ] )
+		{
+			std::error_code ec{ static_cast<int32_t>(
+				GetLastError( ) ), std::system_category( ) };
+			std::cout << "Failed to create event: " << ec.message( ) << '\n';
+			return;
+		}
+
+		auto [ high, low ] = winh::split_size( ( std::size_t )_data_size * i );
+
+		overlapped[ i ].hEvent = events[ i ];
+		overlapped[ i ].Offset = low;
+		overlapped[ i ].OffsetHigh = high;
+
+		pointers[ i ].reset( _aligned_malloc( _data_size, 512 ) );
+		char* ptr{ ( char* )pointers[ i ].get( ) };
+		std::copy( data.begin( ), data.end( ), ptr );
+	}
+
+	std::cout << "Memory allocated starting test\n";
+	// Allocate aligned memory.
+	//winh::unique_any_ptr<LPVOID, &_aligned_free> uptr{ _aligned_malloc( _data_size, 512 ) };
+	//if( !uptr )
+	//{
+	//	std::cout << "Failed to allocate aligned memory\n";
+	//	return;
+	//}
+	//std::uintptr_t* ptr{ reinterpret_cast<std::uintptr_t*>( uptr.get( ) ) };
+	//
+	//if( reinterpret_cast<std::uintptr_t>( uptr.get( ) ) % 512 == 0 )
+	//	std::cout << "Memory correctly aligned\n";
+	//else 
+	//	std::cout << "Failed to align memory\n";
+	//
+	//const std::uintptr_t* out{ reinterpret_cast< std::uintptr_t*>( _buffer_a.data( ) ) };
+	//const std::size_t size{ _buffer_a.size( ) / sizeof( std::uintptr_t ) };
+	//
+	//std::copy( out, out + size, ptr );
+
+	DWORD written{ 0 };
+	winh::stopwatch sw;
+	winh::stopwatch sw2;
+	sw.start( );
+
+	for( int i = 0; i < count; i++ )
+	{
+		sw2.start( );
+		if( !WriteFile( fhandle.get( ), pointers[ i ].get( ), _data_size, nullptr, &overlapped[ i ] ) )
+		{
+			if( auto code{ GetLastError( ) }; code != ERROR_IO_PENDING )
+			{
+				std::error_code ex{ static_cast<int32_t>( code ), std::system_category( ) };
+				std::cout << "Failed: WriteFile - " << ex.message( ) << '\n';
+				return;
+			}			
+		}
+		else
+		{
+			std::cout << "Write file returned true\n";
+		}
+		sw2.stop( );		
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::microseconds>( ) << "us\n";
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+		sw2.reset( );
+	}
+	
+	WaitForMultipleObjects( 5, events.data( ), TRUE, INFINITE );
+	sw.stop( );
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+	//std::cout << "Bytes written " << written << '\n';
 }
 
 static void test_write_overlapped( std::wstring_view filepath )
 {
-	using namespace wh;
-	using namespace wh::diag;
-
-	auto privexpected{ wh::util::set_privilege( SE_MANAGE_VOLUME_NAME, true ) };
-	auto fexpected{ wh::fs::create_file(
+	auto privexpected{ winh::set_privilege( SE_MANAGE_VOLUME_NAME, true ) };
+	auto fexpected{ winh::create_file(
 		filepath,
-		access_flag::write,
-		share_flag::share_none,
-		creation_option::create_always,
-		attr_flag::flag_overlapped ) };
+		winh::access_flag::write,
+		winh::share_flag::share_none,
+		winh::creation_option::create_always,
+		winh::attr_flag::flag_overlapped ) };
 
 	if( !fexpected )
 	{
@@ -323,31 +498,31 @@ static void test_write_overlapped( std::wstring_view filepath )
 		std::cout << "Failed: SetFileCompletionNotificationModes - " << ex.message( ) << '\n';
 	}
 	LARGE_INTEGER file_size{ 0 };
-	file_size.QuadPart = _data_size * 4;
+	file_size.QuadPart = _data_size * 5;
 
-	SetFilePointerEx( fhandle.get( ), file_size, nullptr, FILE_BEGIN );
-	SetEndOfFile( fhandle.get( ) );
+	if( auto exp{ winh::resize_file( fhandle.get( ), file_size.QuadPart ) }; !exp )
+		std::cout << "Failed to resize file: " << exp.error( ).message( ) << '\n';
 
-	// We are only able to use the valid file data
-	// function if setting the privilege was successful.
 	if( privexpected )
 	{
+		std::cout << "Setting valid data\n";
 		if( !SetFileValidData( fhandle.get( ), file_size.QuadPart ) )
 		{
-			std::error_code ex{ static_cast<int32_t>( 
+			std::error_code ex{ static_cast< int32_t >(
 				GetLastError( ) ), std::system_category( ) };
 		}
 	}
 
-	static constexpr int32_t count{ 4 };
-	std::vector<wh::write_io_req<std::vector<char>>> requests;
+	static constexpr int32_t count{ 5 };
+	std::vector<winh::write_io_req<std::vector<char>>> requests;
 
 	std::cout << "Creating requests\n";
 	for( int32_t i{ 0 }; i < count; i++ )
 		requests.emplace_back( _data_size * i );
 	
 
-	stopwatch sw{ };	
+	winh::stopwatch sw{ };	
+	winh::stopwatch sw2{ };
 	sw.start( );
 	int32_t req_n{ 0 };
 	for( auto& req : requests )
@@ -359,43 +534,47 @@ static void test_write_overlapped( std::wstring_view filepath )
 			buffer = &_buffer_b;
 		else if( req_n == 3 )
 			buffer = &_buffer_c;
-		else
+		else if( req_n == 4 )
 			buffer = &_buffer_d;
+		else if( req_n == 5 )
+			buffer = &_buffer_e;
 		
-
+		sw2.start( );
 		if( auto result{ req.write_async(
 				fhandle.get( ), std::move( *buffer ) ) }; !result )
 		{
 			std::cout << result.error( ).message( ) << '\n';
 			return;
 		}
+		sw2.stop( );		
+
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::microseconds>( ) << "us\n";
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+		sw2.reset( );
 	}
 
-	if( auto ec{ wh::wait_completion_req(
+	if( auto ec{ winh::wait_completion_req(
 		requests, std::chrono::milliseconds{ INFINITE } ) }; !ec )
 	{
 		std::cerr << "Error waiting " << ec.error( ).message( ) << '\n';
 	}
 	sw.stop( );
 
-	if( auto ec{ wh::remove_completed_req( fhandle.get( ), requests ) }; !ec )
+	if( auto ec{ winh::remove_completed_req( fhandle.get( ), requests ) }; !ec )
 		std::cerr << "Error writing " << ec.error( ).message( ) << '\n';
 
-	std::cout << "Complete. Elapsed " << sw.elapsed_microseconds( ) << "us\n";
-	std::cout << "Complete. Elapsed " << sw.elapsed_milliseconds( ) << "ms\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
 }
 
 static void test_read_overlapped( std::wstring_view filepath )
 {
-	using namespace wh;
-	using namespace wh::diag;
-
-	auto fexpected{ wh::fs::create_file(
+	auto fexpected{ winh::create_file(
 		filepath,
-		access_flag::write | access_flag::read,
-		share_flag::share_none,
-		creation_option::open_existing,
-		attr_flag::flag_overlapped ) };
+		winh::access_flag::write | winh::access_flag::read,
+		winh::share_flag::share_none,
+		winh::creation_option::open_existing,
+		winh::attr_flag::flag_overlapped ) };
 
 	if( !fexpected )
 	{
@@ -406,14 +585,14 @@ static void test_read_overlapped( std::wstring_view filepath )
 	auto fhandle{ std::move( fexpected ).value( ) };
 
 	static constexpr int32_t count{ 4 };
-	std::vector<wh::read_io_req> requests;
+	std::vector<winh::read_io_req> requests;
 
 	std::cout << "Creating requests\n";
 	for( int32_t i{ 0 }; i < count; i++ )
 		requests.emplace_back( _data_size * i );
 
 	
-	stopwatch sw{ };
+	winh::stopwatch sw{ };
 	sw.start( );
 
 	std::vector<HANDLE> events;
@@ -433,32 +612,29 @@ static void test_read_overlapped( std::wstring_view filepath )
 	}
 
 	std::cout << "Waiting\n";
-	if( auto ec{ wh::wait_completion_req(
+	if( auto ec{ winh::wait_completion_req(
 		requests, std::chrono::milliseconds{ INFINITE } ) }; !ec )
 	{
 		std::cerr << "Error waiting " << ec.error( ).message( ) << '\n';
 	}
-	if( auto ec{ wh::remove_completed_req( fhandle.get( ), requests ) }; !ec )
+	if( auto ec{ winh::remove_completed_req( fhandle.get( ), requests ) }; !ec )
 		std::cerr << "Error writing " << ec.error( ).message( ) << '\n';
 
 	sw.stop( );
 
-	std::cout << "Complete. Elapsed " << sw.elapsed_microseconds( ) << "us\n";
-	std::cout << "Complete. Elapsed " << sw.elapsed_milliseconds( ) << "ms\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
 
 }
 
 static void test_overlapped( std::wstring_view filepath )
 {
-	using namespace wh;
-	using namespace wh::diag;
-
-	auto fexpected{ wh::fs::create_file( 
+	auto fexpected{ winh::create_file( 
 		filepath, 
-		access_flag::write | access_flag::read, 
-		share_flag::share_none, 
-		creation_option::create_always, 
-		attr_flag::flag_overlapped ) };
+		winh::access_flag::write | winh::access_flag::read, 
+		winh::share_flag::share_none, 
+		winh::creation_option::create_always, 
+		winh::attr_flag::flag_overlapped ) };
 
 	if( !fexpected )
 	{
@@ -494,7 +670,7 @@ static void test_overlapped( std::wstring_view filepath )
 	}
 
 	LARGE_INTEGER li{ 0 };
-	stopwatch sw{ };
+	winh::stopwatch sw{ };
 	sw.start( );
 
 	for( int32_t i{ 0 }; i < count; i++ )
@@ -533,56 +709,20 @@ static void test_overlapped( std::wstring_view filepath )
 	WaitForMultipleObjects( 4, events.data( ), TRUE, 60000 );
 	sw.stop( );
 
-	std::cout << "Complete. Elapsed " << sw.elapsed_microseconds( ) << "us\n";
-	std::cout << "Complete. Elapsed " << sw.elapsed_milliseconds( ) << "ms\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
 }
 
-class system_info : public SYSTEM_INFO
-{
-public:
-	system_info( ) noexcept { GetSystemInfo( this ); }
-};
-
-
-static wh::unique_view_ptr create_view2( 
-	HANDLE mmf, std::size_t offset, std::size_t length )
-{
-	static const system_info info{ };
-	static const std::size_t granularity{ info.dwAllocationGranularity };
-	
-	// Round the offset down to the nearest
-	// multiple of the allocation granularity.
-	const std::size_t corrected_offset{ round_down( offset, granularity ) };
-	std::size_t correction{ offset - corrected_offset };
-	// Increase the requested length to ensure
-	// we pass a view which contains the requested
-	// addresses.
-	length += correction;
-
-	const DWORD high{ static_cast<DWORD>( ( corrected_offset >> 32 ) & 0xFFFFFFFFUL ) };
-	const DWORD low{ static_cast<DWORD>( corrected_offset & 0xFFFFFFFFUL ) };
-	
-	auto ptr{ static_cast<char*>( 
-		MapViewOfFile( mmf, FILE_MAP_ALL_ACCESS, high, low, length ) ) };
-
-	// Move the pointer to the offset position specied.
-	if( ptr ) ptr += correction;
-
-	return wh::unique_view_ptr{ ptr };
-}
 
 static void test_mmf( std::wstring_view filepath )
 {
-	using namespace wh;
-	using namespace wh::fs;
-	using namespace wh::diag;	
-	
-	auto fexpected{ wh::fs::create_file(
+	auto privexpected{ winh::set_privilege( SE_MANAGE_VOLUME_NAME, true ) };
+	auto fexpected{ winh::create_file(
 		filepath,
-		access_flag::write | access_flag::read,
-		share_flag::share_read | share_flag::share_write,
-		creation_option::create_always,
-		attr_flag::attr_normal ) };
+		winh::access_flag::write | winh::access_flag::read,
+		winh::share_flag::share_read | winh::share_flag::share_write,
+		winh::creation_option::create_always,
+		winh::attr_flag::attr_normal ) };
 
 	if( !fexpected )
 	{
@@ -591,15 +731,31 @@ static void test_mmf( std::wstring_view filepath )
 		return;
 	}
 	auto fhandle{ std::move( fexpected.value( ) ) };
+	if( !SetFileCompletionNotificationModes(
+		fhandle.get( ), FILE_SKIP_SET_EVENT_ON_HANDLE ) )
+	{
+		std::error_code ex{ static_cast< int32_t >( GetLastError( ) ), std::system_category( ) };
+		std::cout << "Failed: SetFileCompletionNotificationModes - " << ex.message( ) << '\n';
+	}
 
-	static const system_info info{ };
+	static const winh::system_info info{ };
 	static const std::size_t granularity{ info.dwAllocationGranularity };
 
-	const int64_t view_size{ round_up( _data_size, info.dwAllocationGranularity ) };
-	const LARGE_INTEGER file_size{ view_size * 4 };
+	const int64_t view_size{ winh::round_up( _data_size, info.dwAllocationGranularity ) };
+	const LARGE_INTEGER file_size{ view_size * 5 };
 
-	SetFilePointerEx( fhandle.get( ), file_size, nullptr, FILE_BEGIN );
-	SetEndOfFile( fhandle.get( ) );
+	if( auto exp{ winh::resize_file( fhandle.get( ), file_size.QuadPart ) }; !exp )
+		std::cout << "Failed to resize file: " << exp.error( ).message( ) << '\n';
+
+	if( privexpected )
+	{
+		std::cout << "Setting valid data\n";
+		if( !SetFileValidData( fhandle.get( ), file_size.QuadPart ) )
+		{
+			std::error_code ex{ static_cast< int32_t >(
+				GetLastError( ) ), std::system_category( ) };
+		}
+	}
 	
 	if( file_size.QuadPart % view_size != 0 )
 	{
@@ -607,15 +763,15 @@ static void test_mmf( std::wstring_view filepath )
 		return;
 	}
 
-	auto mmfexpected{ create_mapping( fhandle.get( ),
-		protection_flag::read_write, 0 ) };
+	auto mmfexpected{ winh::create_mapping( fhandle.get( ),
+		winh::protection_flag::read_write, 0 ) };
 
 	if( !mmfexpected )
 	{
 		std::cout << "Failed to map file: " << mmfexpected.error( ).message( ) << '\n';
 		return;
 	}
-	unique_file_ptr mmf{ std::move( mmfexpected ).value( ) };
+	winh::unique_file_ptr mmf{ std::move( mmfexpected ).value( ) };
 	if( !mmf )
 	{
 		std::error_code ec{ static_cast<int32_t>(
@@ -624,10 +780,11 @@ static void test_mmf( std::wstring_view filepath )
 		return;
 	}
 
-	static constexpr int32_t count{ 4 };
+	static constexpr int32_t count{ 5 };
 	std::array<char*, count> pointers{ };
 
-	stopwatch sw{ };
+	winh::stopwatch sw{ };
+	winh::stopwatch sw2{ };
 	sw.start( );
 	std::size_t file_offset{ 0 };
 
@@ -647,22 +804,30 @@ static void test_mmf( std::wstring_view filepath )
 		case 3:
 			pointers[ i ] = _buffer_d.data( );
 			break;
+		case 4:
+			pointers[ i ] = _buffer_e.data( );
+			break;
 		}
 
-		auto viewexpected{ create_view( mmf.get( ), file_offset, _data_size ) };
+		auto viewexpected{ winh::create_view( mmf.get( ), file_offset, _data_size ) };
 		if( !viewexpected )
 		{
 			std::cout << "Failed to create MMF view: " << viewexpected.error( ).message( ) << '\n';
 			return;
 		}
-		unique_view_ptr view{ std::move( viewexpected ).value( ) };
-		char* outbuf{ static_cast<char*>( view.get( ) ) };		
+		winh::unique_view_ptr view{ std::move( viewexpected ).value( ) };
+		char* outbuf{ static_cast<char*>( view.get( ) ) };	
+		sw2.start( );
 		std::copy( pointers[ i ], pointers[ i ] + _data_size, outbuf );
+		sw2.stop( );
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::microseconds>( ) << "us\n";
+		std::cout << "Inner Complete. Elapsed " << sw2.elapsed<std::chrono::milliseconds>( ) << "ms\n";
+		sw2.reset( );
 		file_offset += _data_size;
 	}
 	sw.stop( );
-	std::cout << "Complete. Elapsed " << sw.elapsed_microseconds( ) << "us\n";
-	std::cout << "Complete. Elapsed " << sw.elapsed_milliseconds( ) << "ms\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::microseconds>( ) << "us\n";
+	std::cout << "Complete. Elapsed " << sw.elapsed<std::chrono::milliseconds>( ) << "ms\n";
 
 
 	mmf.reset( nullptr );
@@ -674,10 +839,10 @@ static void test_mmf( std::wstring_view filepath )
 
 int wmain( int argc, wchar_t* argv[ ] )
 {
-	//test_pointer( );
-	//test_known_path( );
-	//test_temp_path( );
-	//test_current_path( );
+	test_pointer( );
+	test_known_path( );
+	test_temp_path( );
+	test_current_path( );
 	if( argc > 1 )
 	{
 		std::wstring path{ argv[ 1 ] };
@@ -691,14 +856,10 @@ int wmain( int argc, wchar_t* argv[ ] )
 		std::cout << '\n';
 		std::cout << "Overlapped Read Test\n";
 		test_read_overlapped( LR"(C:\Users\wbuckley\OneDrive\Test\DirTest\OverLapped.txt)" );
-
-		//std::cout << '\n';
-		//std::cout << "File stream Test\n";
-		//test_file_write( R"(C:\Users\wbuckley\OneDrive\Test\DirTest\Stream.txt)" );
-		//
-		//std::cout << '\n';
-		//std::cout << "MMF Test\n";
-		//test_mmf( LR"(C:\Users\wbuckley\OneDrive\Test\DirTest\MemoryMapped.txt)" );
+		
+		std::cout << '\n';
+		std::cout << "MMF Test\n";
+		test_mmf( LR"(C:\Users\wbuckley\OneDrive\Test\DirTest\MemoryMapped.txt)" );
 		test_remove_dir( path );
 	}
 	test_encoding( ); 

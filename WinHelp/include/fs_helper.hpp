@@ -44,5 +44,10 @@ namespace wh::fs
 	expected_ec_t<unique_view_ptr> create_view( HANDLE mmf, 
 												std::size_t offset, 
 											    std::size_t size ) noexcept;
+
+	[[nodiscard]]
+	expected_ec_t<void> resize_file( HANDLE file,
+							         int64_t newsize,
+									 int64_t fptr = 0 ) noexcept;
 }
 

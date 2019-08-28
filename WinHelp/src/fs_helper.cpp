@@ -12,6 +12,7 @@
 
 namespace wh::fs
 {
+	using namespace util;
 	expected_ec_t<std::wstring> get_known_path( const KNOWNFOLDERID& id ) noexcept
 	{
 		PWSTR buffer{ nullptr };
@@ -22,8 +23,7 @@ namespace wh::fs
 			unique_any_ptr<PWSTR, &CoTaskMemFree> pbuffer{ buffer };
 			return std::wstring{ pbuffer.get( ) };
 		}
-		return std::error_code{ static_cast<int32_t>( hresult ), 
-			std::system_category( ) };
+		return get_errorcode( hresult );
 	}
 
 	expected_ec_t<std::wstring> get_temp_path( ) noexcept
@@ -44,10 +44,8 @@ namespace wh::fs
 				collapsed_path.resize( copied );
 
 			else if( copied == 0 )
-			{
-				return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
-					std::system_category( ) };
-			}
+				return get_errorcode( GetLastError( ) );
+			
 			else break;
 		}
 
@@ -65,10 +63,8 @@ namespace wh::fs
 				full_path.resize( copied );
 
 			else if( copied == 0 )
-			{
-				return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
-					std::system_category( ) };
-			}
+				return get_errorcode( GetLastError( ) );
+			
 			else
 			{
 				full_path.resize( copied );
@@ -83,8 +79,7 @@ namespace wh::fs
 		if( CreateDirectoryW( dir.data( ), nullptr ) )
 			return { };
 		
-		return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
-			std::system_category( ) };
+		return get_errorcode( GetLastError( ) );
 	}
 
 	expected_ec_t<std::wstring> get_current_dir( ) noexcept
@@ -93,10 +88,10 @@ namespace wh::fs
 		DWORD size{ GetCurrentDirectoryW( 0, nullptr ) };
 		std::wstring buffer( size, L'\0' );
 
-		if( DWORD copied{ GetCurrentDirectoryW( size, buffer.data( ) ) }; copied == 0 )
+		if( DWORD copied{ GetCurrentDirectoryW( 
+			size, buffer.data( ) ) }; copied == 0 )
 		{
-			return std::error_code{ static_cast<int32_t>( GetLastError( ) ),
-				std::system_category( ) };
+			return get_errorcode( GetLastError( ) );
 		}	
 		else
 		{
@@ -118,7 +113,7 @@ namespace wh::fs
 			COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE ) };
 
 		if( FAILED( hresult ) )
-			return std::error_code{ hresult, std::system_category( ) };
+			return get_errorcode( hresult );
 
 		// Unitializes the COM object when the scope exits.
 		const auto cleanup = on_scoped_exit( [ ] { CoUninitialize( ); } );
@@ -233,14 +228,11 @@ namespace wh::fs
 		return mmf;
 	}
 
-	struct system_info : public SYSTEM_INFO
-	{ system_info( ) noexcept { GetSystemInfo( this ); } };
-
 	expected_ec_t<unique_view_ptr> create_view( HANDLE mmf, 
 												std::size_t offset, 
 												std::size_t size ) noexcept
 	{
-		static const system_info info{ };
+		static const util::system_info info{ };
 		static const std::size_t granularity{ info.dwAllocationGranularity };
 
 		// Round the offset down to the nearest
@@ -265,5 +257,21 @@ namespace wh::fs
 		return wh::unique_view_ptr{ static_cast<char*>( view ) + correction };
 	}
 
+	expected_ec_t<void> resize_file( HANDLE file, int64_t newsize, int64_t fptr ) noexcept
+	{
+		LARGE_INTEGER li{ };
+		li.QuadPart = newsize;
 
+		if( !SetFilePointerEx( file, li, nullptr, FILE_BEGIN ) )
+			return get_errorcode( GetLastError( ) );
+		
+		if( !SetEndOfFile( file ) )
+			return get_errorcode( GetLastError( ) );
+		
+		li.QuadPart = fptr;
+		if( !SetFilePointerEx( file, li, nullptr, FILE_BEGIN ) )
+			return get_errorcode( GetLastError( ) );
+
+		return { };
+	}
 }

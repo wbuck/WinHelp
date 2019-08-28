@@ -23,10 +23,15 @@ namespace wh
 		constexpr expected( T&& t ) noexcept
 			: _value{ std::forward<T>( t ) } { }
 
+		constexpr expected( const T& t ) 
+			noexcept( std::is_nothrow_copy_constructible_v<T> )
+			: _value{ t } { }
+
 		constexpr expected( E&& e ) noexcept
 			: _value{ std::forward<E>( e ) } { }
 
-		constexpr expected( const E& e ) noexcept( std::is_nothrow_copy_constructible_v )
+		constexpr expected( const E& e ) 
+			noexcept( std::is_nothrow_copy_constructible_v<E> )
 			: _value{ e } { }
 
 		constexpr operator bool( ) const noexcept
@@ -57,7 +62,7 @@ namespace wh
 		constexpr expected( E&& e ) noexcept
 			: _value{ std::forward<E>( e ) } { }
 
-		constexpr expected( const E& e ) noexcept( std::is_nothrow_copy_constructible_v )
+		constexpr expected( const E& e ) noexcept( std::is_nothrow_copy_constructible_v<E> )
 			: _value{ e } { }
 
 		constexpr operator bool( ) const noexcept
